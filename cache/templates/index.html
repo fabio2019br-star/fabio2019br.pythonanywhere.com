@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S.I. News</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header>
+  <span class="kicker">S.I. News</span>
+  <h1>S.I. <em>News</em></h1>
+  <p class="sub">
+    <strong>{{ countries|length }} países</strong> com notícias ·
+    {{ total_countries }} monitorados · {{ generated_at }}
+  </p>
+</header>
+
+<main class="mosaic">
+  {% for c in countries %}
+  <article class="card">
+    <span class="tag" data-color="{% if loop.index0 % 3 == 0 %}red{% elif loop.index0 % 3 == 1 %}green{% else %}gold{% endif %}">
+      {{ c.code }} · {{ c.city }}
+    </span>
+    <h2>{{ c.name }}</h2>
+
+    <ul style="list-style:none; margin-top:12px; position:relative; z-index:1;">
+      {% for a in c.articles[:3] %}
+      <li style="font-size:0.82rem; color:var(--muted); margin-bottom:6px; line-height:1.4;">
+        {{ a.title[:90] }}{% if a.title|length > 90 %}…{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+
+    <div class="meta">
+      <span class="source">{{ c.count }} notícia{% if c.count != 1 %}s{% endif %}</span>
+      <span class="date">ver →</span>
+    </div>
+    <a class="cover" href="{{ url_for('pais', code=c.code) }}" aria-label="Ver notícias de {{ c.name }}">Ver</a>
+  </article>
+  {% endfor %}
+</main>
+
+<footer>
+  <span>•</span> S.I. News · {{ filename }} <span>•</span>
+</footer>
+
+</body>
+</html>

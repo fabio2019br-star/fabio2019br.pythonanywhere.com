@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ artigo.title }} · S.I. News</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header>
+  <a href="{{ url_for('index') }}" class="kicker" style="text-decoration:none;">← Voltar</a>
+  <h1 style="font-size: clamp(1.8rem, 4vw, 3rem); text-align:left; max-width:820px; margin: 24px auto 0;">{{ artigo.title }}</h1>
+  <p class="sub" style="text-align:left; max-width:820px; margin: 18px auto 0;">
+    <strong>{{ artigo.source }}</strong> · {{ artigo.date }}
+  </p>
+</header>
+
+<main style="max-width:820px; margin:0 auto;">
+  <article class="card" style="padding: 40px 36px; min-height:auto;">
+    <span class="tag" data-color="{{ artigo.color }}">{{ artigo.tag }}</span>
+    <p style="font-size: 1.1rem; line-height: 1.75; color: var(--ink); position:relative; z-index:1;">
+      {{ artigo.body }}
+    </p>
+  </article>
+</main>
+
+<footer>
+  <span>•</span> S.I. News · Setembro 2026 <span>•</span>
+</footer>
+
+</body>
+</html>

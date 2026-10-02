@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>{{ country.name }} · S.I. News</title>
+
+<!-- Favicon inline -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23c8102e'/%3E%3Ctext x='50%25' y='54%25' text-anchor='middle' dominant-baseline='middle' font-family='Georgia,serif' font-weight='900' font-size='34' fill='%23fbf9f4'%3ES.I%3C/text%3E%3C/svg%3E?v=2">
+
+<!-- Open Graph dinâmico por país -->
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="S.I. News">
+<meta property="og:title" content="{{ country.name }} — {{ country.count }} news · S.I. News">
+<meta property="og:description" content="Top news from {{ country.name }} ({{ country.city }}) in {{ country.language }}.">
+<meta property="og:url" content="{{ request.url }}">
+<meta property="og:locale" content="en_US">
+
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="{{ country.name }} — S.I. News">
+<meta name="twitter:description" content="{{ country.count }} news · {{ country.city }} · {{ country.language }}">
+<meta name="theme-color" content="#c8102e">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css', v=asset_version) }}">
+</head>
+<body>
+
+<header>
+  <a href="{{ url_for('index') }}" class="kicker" style="text-decoration:none;">← Back</a>
+  <h1 style="font-size: clamp(1.8rem, 4vw, 3rem); text-align:center; max-width:900px; margin: 24px auto 0;">
+    {{ country.name }} <em style="font-size:0.5em; color:var(--muted); font-style:normal;">({{ country.code }})</em>
+  </h1>
+  <p class="sub" style="text-align:center; max-width:900px; margin: 14px auto 0;">
+    {{ country.city }} · language {{ country.language }} · {{ country.count }} news
+  </p>
+</header>
+
+<!-- 🔍 Search -->
+<div class="search-wrap">
+  <div class="search-box">
+    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="8"></circle>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+    <input
+      type="search"
+      id="search"
+      class="search"
+      placeholder="Search by title, source, or date…"
+      autocomplete="off"
+      aria-label="Search articles"
+    >
+    <button type="button" class="search-clear" id="search-clear" aria-label="Clear search" hidden>
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  </div>
+  <span class="search-count" id="search-count"></span>
+</div>
+
+<main id="articles" style="max-width:900px; margin:0 auto;">
+  {% for a in country.articles %}
+  <article class="card"
+           data-search="{{ (a.title ~ ' ' ~ a.source ~ ' ' ~ a.date)|lower }}"
+           data-key="{{ a.link }}"
+           style="min-height:auto; margin-bottom:14px; padding: 22px 24px;">
+
+    <!-- Overlay "Read" exibido durante o arraste -->
+    <div class="read-overlay" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      <span>Read</span>
+    </div>
+
+    <span class="tag" data-color="{% if loop.index0 % 3 == 0 %}red{% elif loop.index0 % 3 == 1 %}green{% else %}gold{% endif %}">
+      {{ a.source }}
+    </span>
+    <h2 style="font-size:1.15rem; margin-bottom:14px;">{{ a.title }}</h2>
+    <div class="meta" style="margin-top:0;">
+      <span class="source">{{ a.date }}</span>
+      <a href="{{ a.link }}" target="_blank" rel="noopener"
+         style="font-weight:700; color:var(--accent); text-decoration:none;">
+        read original →
+      </a>
+    </div>
+  </article>
+  {% endfor %}
+</main>
+
+<p id="no-results" class="no-results" hidden>
+  No results found.<br>
+  <small>Try searching for another title, source, or date.</small>
+</p>
+
+<footer>
+  <span>•</span>
+  <code style="font-size:0.85em;">{{ filename }}</code>
+  <span>•</span>
+  <a href="#" class="back-to-top" id="back-to-top" aria-label="Back to top">↑ top</a>
+  <span>•</span>
+  <a href="#" class="reset-read" id="reset-read" hidden>
+    <span class="reset-icon">↺</span> reset read
+  </a>
+  <span>•</span>
+</footer>
+
+<!-- Container dos toasts -->
+<div id="toast-stack" aria-live="polite" aria-atomic="true"></div>
+
+<script>
+(function () {
+  /* ============================================================
+     1. BUSCA
+     ============================================================ */
+  const input = document.getElementById('search');
+  const clear = document.getElementById('search-clear');
+  const cards = Array.from(document.querySelectorAll('#articles .card'));
+  const counter = document.getElementById('search-count');
+  const noResults = document.getElementById('no-results');
+
+  const highlightables = [];
+  cards.forEach(function (card) {
+    const els = card.querySelectorAll('h2, .tag, .meta .source');
+    els.forEach(function (el) {
+      highlightables.push({ el: el, html: el.innerHTML });
+    });
+  });
+
+  function escapeRegExp(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  function highlight(el, originalHTML, query) {
+    if (!query) {
+      el.innerHTML = originalHTML;
+      return;
+    }
+
+    const temp = document.createElement('div');
+    temp.innerHTML = originalHTML;
+
+    const regex = new RegExp('(' + escapeRegExp(query) + ')', 'gi');
+
+    const walker = document.createTreeWalker(temp, NodeFilter.SHOW_TEXT, null);
+    const textNodes = [];
+    let node;
+    while ((node = walker.nextNode())) {
+      if (node.nodeValue.trim() && regex.test(node.nodeValue)) {
+        textNodes.push(node);
+      }
+      regex.lastIndex = 0;
+    }
+
+    textNodes.forEach(function (textNode) {
+      const frag = document.createDocumentFragment();
+      let lastIndex = 0;
+      const text = textNode.nodeValue;
+
+      text.replace(regex, function (match, _g, offset) {
+        if (offset > lastIndex) {
+          frag.appendChild(document.createTextNode(text.slice(lastIndex, offset)));
+        }
+        const mark = document.createElement('mark');
+        mark.className = 'hl';
+        mark.textContent = match;
+        frag.appendChild(mark);
+        lastIndex = offset + match.length;
+        return match;
+      });
+
+      if (lastIndex < text.length) {
+        frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+      }
+      textNode.parentNode.replaceChild(frag, textNode);
+    });
+
+    el.innerHTML = temp.innerHTML;
+  }
+
+  function filter() {
+    const raw = input.value.trim();
+    const q = raw.toLowerCase();
+    let visible = 0;
+
+    cards.forEach(function (card) {
+      if (card.dataset.dismissed === '1') return;
+      const haystack = card.getAttribute('data-search') || '';
+      const match = !q || haystack.indexOf(q) !== -1;
+      card.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+
+    highlightables.forEach(function (item) {
+      highlight(item.el, item.html, raw);
+    });
+
+    const activeCards = cards.filter(function (c) { return c.dataset.dismissed !== '1'; });
+    counter.textContent = q ? visible + ' of ' + activeCards.length + ' results' : '';
+    clear.hidden = !raw;
+    noResults.hidden = visible !== 0;
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === '/' && document.activeElement !== input) {
+      e.preventDefault();
+      input.focus();
+    }
+    if (e.key === 'Escape' && document.activeElement === input) {
+      input.value = '';
+      filter();
+      input.blur();
+    }
+  });
+
+  input.addEventListener('input', filter);
+
+  clear.addEventListener('click', function () {
+    input.value = '';
+    filter();
+    input.focus();
+  });
+
+  const backToTop = document.getElementById('back-to-top');
+  if (backToTop) {
+    backToTop.addEventListener('click', function (e) {
+      e.preventDefault();
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.scrollTo({ top: 0, behavior: prefersReduced ? 'auto' : 'smooth' });
+    });
+  }
+
+  /* ============================================================
+     2. DRAG-TO-DISMISS
+     ============================================================ */
+  const DISMISS_RATIO = 0.35;
+  const MAX_OFFSET    = 220;
+  // Chave única por país — evita que lidos de um país sumam de outro
+  const STORAGE_KEY   = 'sinews:read:{{ country.code }}';
+
+  const readSet = (function () {
+    if (!STORAGE_KEY) return new Set();
+    try { return new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')); }
+    catch (e) { return new Set(); }
+  })();
+
+  function persist() {
+    if (!STORAGE_KEY) return;
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(readSet))); }
+    catch (e) {}
+  }
+
+  function cardKey(card) {
+    // Nesta página, o card tem data-key com a URL do artigo original
+    return card.getAttribute('data-key');
+  }
+
+  // Remove já os que estavam lidos
+  cards.forEach(function (card) {
+    const k = cardKey(card);
+    if (k && readSet.has(k)) {
+      card.dataset.dismissed = '1';
+      card.remove();
+    }
+  });
+
+  /* -------- Botão "Reset read" -------- */
+  const resetBtn = document.getElementById('reset-read');
+
+  function updateResetButton() {
+    if (!resetBtn) return;
+    const temLidos = readSet.size > 0;
+    const temDispensados = cards.some(function (c) { return c.dataset.dismissed === '1'; });
+    resetBtn.hidden = !(temLidos || temDispensados);
+  }
+
+  updateResetButton();
+
+  if (resetBtn) {
+    resetBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (STORAGE_KEY) {
+        try { localStorage.removeItem(STORAGE_KEY); } catch (err) {}
+      }
+      readSet.clear();
+      location.reload();
+    });
+  }
+
+  /* -------- Toast (versão com toast único) -------- */
+  const stack = document.getElementById('toast-stack');
+  let activeToast = null;
+  let activeTimer = null;
+  let activeUndo = null;
+
+  function showToast(message, onUndo) {
+    if (activeToast) {
+      clearTimeout(activeTimer);
+
+      activeUndo = onUndo;
+      const undoBtn = activeToast.querySelector('.toast-undo');
+      if (undoBtn && onUndo) {
+        const novo = undoBtn.cloneNode(true);
+        undoBtn.parentNode.replaceChild(novo, undoBtn);
+        novo.addEventListener('click', function () {
+          if (activeUndo) activeUndo();
+          removeToast();
+        });
+      }
+
+      activeTimer = setTimeout(removeToast, 3200);
+      return;
+    }
+
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.innerHTML =
+      '<span class="toast-check">' +
+        '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>' +
+      '</span>' +
+      '<span>' + message + '</span>' +
+      (onUndo ? '<button class="toast-undo" type="button">Undo</button>' : '');
+    stack.appendChild(t);
+    requestAnimationFrame(function () { t.classList.add('show'); });
+
+    activeToast = t;
+    activeUndo = onUndo || null;
+    activeTimer = setTimeout(removeToast, 3200);
+
+    if (onUndo) {
+      t.querySelector('.toast-undo').addEventListener('click', function () {
+        if (activeUndo) activeUndo();
+        removeToast();
+      });
+    }
+
+    t.addEventListener('pointerdown', function (e) {
+      const startX = e.clientX;
+      function move(ev) {
+        const dx = ev.clientX - startX;
+        t.style.transform = 'translateX(' + dx + 'px)';
+        t.style.opacity = String(1 - Math.min(Math.abs(dx) / 150, 1));
+      }
+      function up(ev) {
+        document.removeEventListener('pointermove', move);
+        document.removeEventListener('pointerup', up);
+        if (Math.abs(ev.clientX - startX) > 80) {
+          removeToast();
+        } else {
+          t.style.transform = '';
+          t.style.opacity = '';
+        }
+      }
+      document.addEventListener('pointermove', move);
+      document.addEventListener('pointerup', up);
+    });
+  }
+
+  function removeToast() {
+    if (!activeToast) return;
+    clearTimeout(activeTimer);
+    const t = activeToast;
+    activeToast = null;
+    activeUndo = null;
+    t.classList.remove('show');
+    setTimeout(function () { t.remove(); }, 350);
+  }
+
+  /* -------- Drag -------- */
+  function attachDrag(card) {
+    let startX = 0, startY = 0;
+    let dx = 0;
+    let dragging = false;
+    let decided = false;
+    let pointerId = null;
+
+    function onDown(e) {
+      if (e.button !== undefined && e.button !== 0) return;
+      startX = e.clientX;
+      startY = e.clientY;
+      dx = 0;
+      dragging = true;
+      decided = false;
+      pointerId = e.pointerId;
+    }
+
+    function onMove(e) {
+      if (!dragging || e.pointerId !== pointerId) return;
+      const mx = e.clientX - startX;
+      const my = e.clientY - startY;
+
+      if (!decided) {
+        if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
+        decided = true;
+
+        if (Math.abs(my) > Math.abs(mx)) {
+          dragging = false;
+          return;
+        }
+
+        card.classList.add('dragging');
+        if (card.setPointerCapture) {
+          try { card.setPointerCapture(e.pointerId); } catch (err) {}
+        }
+        card.dataset.wasDragging = '1';
+      }
+
+      dx = mx;
+      const clamped = Math.sign(dx) * Math.min(Math.abs(dx), MAX_OFFSET);
+      card.style.transform = 'translateX(' + clamped + 'px)';
+
+      const ratio = Math.abs(clamped) / card.offsetWidth;
+      card.classList.toggle('will-dismiss', ratio >= DISMISS_RATIO);
+      e.preventDefault();
+    }
+
+    function onUp() {
+      if (!dragging) {
+        delete card.dataset.wasDragging;
+        return;
+      }
+      dragging = false;
+      card.classList.remove('dragging');
+
+      const ratio = Math.abs(dx) / card.offsetWidth;
+
+      if (ratio >= DISMISS_RATIO) {
+        // Bloqueia clique acidental no "read original →" depois de arrastar
+        const link = card.querySelector('.meta a');
+        if (link) {
+          const block = function (ev) { ev.preventDefault(); ev.stopPropagation(); };
+          link.addEventListener('click', block, { once: true, capture: true });
+          setTimeout(function () {
+            link.removeEventListener('click', block, true);
+          }, 300);
+        }
+        dismissCard(card, dx);
+      } else {
+        card.style.transform = '';
+        card.classList.remove('will-dismiss');
+      }
+      setTimeout(function () { delete card.dataset.wasDragging; }, 100);
+    }
+
+    card.addEventListener('pointerdown', onDown);
+    card.addEventListener('pointermove', onMove);
+    card.addEventListener('pointerup', onUp);
+    card.addEventListener('pointercancel', onUp);
+  }
+
+  function dismissCard(card, dx) {
+    const dir = Math.sign(dx) || 1;
+    card.style.setProperty('--exit-x', (dir * 120) + '%');
+    card.classList.add('dismissed');
+    card.dataset.dismissed = '1';
+
+    const key = cardKey(card);
+    const parent = card.parentNode;
+    const nextSibling = card.nextSibling;
+
+    if (key) { readSet.add(key); persist(); }
+
+    setTimeout(function () {
+      card.remove();
+      if (counter.textContent) filter();
+      updateResetButton();
+    }, 380);
+
+    showToast('Read', function () {
+      if (key) { readSet.delete(key); persist(); }
+      card.classList.remove('dismissed');
+      card.dataset.dismissed = '';
+      card.style.removeProperty('--exit-x');
+      card.style.transform = '';
+      card.classList.remove('will-dismiss');
+      if (nextSibling && nextSibling.parentNode === parent) {
+        parent.insertBefore(card, nextSibling);
+      } else {
+        parent.appendChild(card);
+      }
+      if (counter.textContent) filter();
+      updateResetButton();
+    });
+  }
+
+  cards.forEach(function (card) {
+    if (card.dataset.dismissed !== '1') attachDrag(card);
+  });
+
+})();
+</script>
+
+</body>
+</html>
