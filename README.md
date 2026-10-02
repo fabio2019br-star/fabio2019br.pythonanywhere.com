@@ -43,11 +43,11 @@ git clone https://github.com/fabio2019br-star/fabio2019br.pythonanywhere.com.git
 cd fabio2019br.pythonanywhere.com
 
 # Create and activate a virtual environment
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate   # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
 
 # Run the application locally
-python app.py
+python3 flask_app.py
