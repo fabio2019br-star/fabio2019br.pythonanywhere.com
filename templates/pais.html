@@ -26,6 +26,164 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v=asset_version) }}">
+
+<style>
+/* ============================================================
+   CARROSSEL 3D — COVERFLOW (página do país)
+   ============================================================ */
+.carousel-stage {
+  position: relative;
+  margin: 32px 0 8px;
+  perspective: 1400px;
+  perspective-origin: 50% 45%;
+}
+
+.carousel {
+  display: flex;
+  gap: 24px;
+  overflow-x: auto;
+  overflow-y: visible;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  padding: 60px 0 80px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  transform-style: preserve-3d;
+}
+
+.carousel::-webkit-scrollbar { display: none; }
+
+.carousel > .card {
+  flex: 0 0 auto;
+  width: min(78vw, 420px);
+  scroll-snap-align: center;
+  transform-style: preserve-3d;
+  transition: transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1),
+              opacity 0.45s ease,
+              filter 0.45s ease;
+  will-change: transform;
+  /* cards mais compactos que na home */
+  min-height: auto;
+  padding: 26px 26px 22px;
+  cursor: default;
+}
+
+/* Só o card ativo é clicável por inteiro */
+.carousel > .card.is-active {
+  cursor: pointer;
+}
+
+.carousel::before,
+.carousel::after {
+  content: "";
+  flex: 0 0 calc(50vw - min(39vw, 210px));
+}
+
+/* Botões prev/next */
+.carousel-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: #111418;
+  color: #fbf9f4;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  transition: background 0.2s ease, transform 0.15s ease, opacity 0.2s ease;
+}
+.carousel-nav:hover { background: #c8102e; transform: translateY(-50%) scale(1.06); }
+.carousel-nav:disabled { opacity: 0.25; cursor: not-allowed; }
+.carousel-nav svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.carousel-nav.prev { left: 8px; }
+.carousel-nav.next { right: 8px; }
+
+/* Indicador */
+.carousel-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 4px 0 28px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 0.8rem;
+  color: #6b6b6b;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.carousel-indicator strong { color: #111418; font-weight: 700; }
+.carousel-dots {
+  display: inline-flex;
+  gap: 6px;
+  margin: 0 6px;
+}
+.carousel-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d8d4cb;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.carousel-dots span.active { background: #c8102e; transform: scale(1.4); }
+
+@media (max-width: 720px) {
+  .carousel > .card { width: min(86vw, 360px); }
+  .carousel-nav { width: 40px; height: 40px; }
+  .carousel-nav.prev { left: 4px; }
+  .carousel-nav.next { right: 4px; }
+  .carousel::before,
+  .carousel::after { flex-basis: calc(50vw - min(43vw, 180px)); }
+}
+
+/* Ajustes finos no card de artigo */
+.carousel > .card h2 {
+  font-size: 1.15rem;
+  margin-bottom: 14px;
+}
+.carousel > .card .meta {
+  margin-top: 0;
+}
+
+/* ============================================================
+   RODAPÉ — LINK GITHUB + LAST UPDATE
+   ============================================================ */
+.footer-gh {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #111418;
+  color: #fbf9f4;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+.footer-gh:hover { background: #c8102e; color: #fbf9f4; transform: translateY(-1px); }
+.footer-gh svg { width: 14px; height: 14px; fill: currentColor; }
+
+.last-update {
+  font-size: 0.8rem;
+  color: #8a8a8a;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 480px) {
+  .footer-gh { padding: 3px 8px; font-size: 0.75rem; }
+  .last-update { font-size: 0.72rem; }
+}
+</style>
 </head>
 <body>
 
@@ -34,9 +192,6 @@
   <h1 style="font-size: clamp(1.8rem, 4vw, 3rem); text-align:center; max-width:900px; margin: 24px auto 0;">
     {{ country.name }} <em style="font-size:0.5em; color:var(--muted); font-style:normal;">({{ country.code }})</em>
   </h1>
-  <p class="sub" style="text-align:center; max-width:900px; margin: 14px auto 0;">
-    {{ country.city }} · language {{ country.language }} · {{ country.count }} news
-  </p>
 </header>
 
 <!-- 🔍 Search -->
@@ -64,33 +219,43 @@
   <span class="search-count" id="search-count"></span>
 </div>
 
-<main id="articles" style="max-width:900px; margin:0 auto;">
-  {% for a in country.articles %}
-  <article class="card"
-           data-search="{{ (a.title ~ ' ' ~ a.source ~ ' ' ~ a.date)|lower }}"
-           data-key="{{ a.link }}"
-           style="min-height:auto; margin-bottom:14px; padding: 22px 24px;">
+<!-- ============================================================
+     CARROSSEL 3D DE ARTIGOS
+     ============================================================ -->
+<div class="carousel-stage">
+  <button class="carousel-nav prev" id="carousel-prev" aria-label="Previous article">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+  </button>
 
-    <!-- Overlay "Read" exibido durante o arraste -->
-    <div class="read-overlay" aria-hidden="true">
-      <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-      <span>Read</span>
-    </div>
+  <main class="carousel" id="mosaic">
+    {% for a in country.articles %}
+    <article class="card"
+             data-search="{{ (a.title ~ ' ' ~ a.source ~ ' ' ~ a.date)|lower }}"
+             data-href="{{ a.link }}">
+      <span class="tag" data-color="{% if loop.index0 % 3 == 0 %}red{% elif loop.index0 % 3 == 1 %}green{% else %}gold{% endif %}">
+        {{ a.source }}
+      </span>
+      <h2>{{ a.title }}</h2>
+      <div class="meta">
+        <span class="source">{{ a.date }}</span>
+        <a href="{{ a.link }}" target="_blank" rel="noopener"
+           style="font-weight:700; color:var(--accent); text-decoration:none;">
+          read original →
+        </a>
+      </div>
+    </article>
+    {% endfor %}
+  </main>
 
-    <span class="tag" data-color="{% if loop.index0 % 3 == 0 %}red{% elif loop.index0 % 3 == 1 %}green{% else %}gold{% endif %}">
-      {{ a.source }}
-    </span>
-    <h2 style="font-size:1.15rem; margin-bottom:14px;">{{ a.title }}</h2>
-    <div class="meta" style="margin-top:0;">
-      <span class="source">{{ a.date }}</span>
-      <a href="{{ a.link }}" target="_blank" rel="noopener"
-         style="font-weight:700; color:var(--accent); text-decoration:none;">
-        read original →
-      </a>
-    </div>
-  </article>
-  {% endfor %}
-</main>
+  <button class="carousel-nav next" id="carousel-next" aria-label="Next article">
+    <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+  </button>
+</div>
+
+<div class="carousel-indicator" id="carousel-indicator" hidden>
+  <span class="carousel-dots" id="carousel-dots"></span>
+  <span><strong id="carousel-current">1</strong> / <span id="carousel-total">1</span></span>
+</div>
 
 <p id="no-results" class="no-results" hidden>
   No results found.<br>
@@ -99,34 +264,48 @@
 
 <footer>
   <span>•</span>
+  <span class="last-update">Last update: {{ generated_at }}</span>
+  <span>•</span>
   <code style="font-size:0.85em;">{{ filename }}</code>
   <span>•</span>
   <a href="#" class="back-to-top" id="back-to-top" aria-label="Back to top">↑ top</a>
   <span>•</span>
-  <a href="#" class="reset-read" id="reset-read" hidden>
-    <span class="reset-icon">↺</span> reset read
+  <a class="footer-gh"
+     href="https://github.com/fabio2019br-star/fabio2019br.pythonanywhere.com/"
+     target="_blank" rel="noopener noreferrer"
+     aria-label="View source on GitHub">
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+    </svg>
+    Source
   </a>
   <span>•</span>
 </footer>
 
-<!-- Container dos toasts -->
-<div id="toast-stack" aria-live="polite" aria-atomic="true"></div>
-
 <script>
 (function () {
   /* ============================================================
+     REFERÊNCIAS
+     ============================================================ */
+  const carousel    = document.getElementById('mosaic');
+  const allCards    = Array.from(carousel.querySelectorAll('.card'));
+  const input       = document.getElementById('search');
+  const clear       = document.getElementById('search-clear');
+  const counter     = document.getElementById('search-count');
+  const noResults   = document.getElementById('no-results');
+  const prevBtn     = document.getElementById('carousel-prev');
+  const nextBtn     = document.getElementById('carousel-next');
+  const indicator   = document.getElementById('carousel-indicator');
+  const dotsEl      = document.getElementById('carousel-dots');
+  const currentEl   = document.getElementById('carousel-current');
+  const totalEl     = document.getElementById('carousel-total');
+
+  /* ============================================================
      1. BUSCA
      ============================================================ */
-  const input = document.getElementById('search');
-  const clear = document.getElementById('search-clear');
-  const cards = Array.from(document.querySelectorAll('#articles .card'));
-  const counter = document.getElementById('search-count');
-  const noResults = document.getElementById('no-results');
-
   const highlightables = [];
-  cards.forEach(function (card) {
-    const els = card.querySelectorAll('h2, .tag, .meta .source');
-    els.forEach(function (el) {
+  allCards.forEach(function (card) {
+    card.querySelectorAll('h2, .tag, .meta .source').forEach(function (el) {
       highlightables.push({ el: el, html: el.innerHTML });
     });
   });
@@ -136,35 +315,24 @@
   }
 
   function highlight(el, originalHTML, query) {
-    if (!query) {
-      el.innerHTML = originalHTML;
-      return;
-    }
+    if (!query) { el.innerHTML = originalHTML; return; }
 
     const temp = document.createElement('div');
     temp.innerHTML = originalHTML;
-
     const regex = new RegExp('(' + escapeRegExp(query) + ')', 'gi');
-
     const walker = document.createTreeWalker(temp, NodeFilter.SHOW_TEXT, null);
     const textNodes = [];
     let node;
     while ((node = walker.nextNode())) {
-      if (node.nodeValue.trim() && regex.test(node.nodeValue)) {
-        textNodes.push(node);
-      }
+      if (node.nodeValue.trim() && regex.test(node.nodeValue)) textNodes.push(node);
       regex.lastIndex = 0;
     }
-
     textNodes.forEach(function (textNode) {
       const frag = document.createDocumentFragment();
       let lastIndex = 0;
       const text = textNode.nodeValue;
-
       text.replace(regex, function (match, _g, offset) {
-        if (offset > lastIndex) {
-          frag.appendChild(document.createTextNode(text.slice(lastIndex, offset)));
-        }
+        if (offset > lastIndex) frag.appendChild(document.createTextNode(text.slice(lastIndex, offset)));
         const mark = document.createElement('mark');
         mark.className = 'hl';
         mark.textContent = match;
@@ -172,13 +340,9 @@
         lastIndex = offset + match.length;
         return match;
       });
-
-      if (lastIndex < text.length) {
-        frag.appendChild(document.createTextNode(text.slice(lastIndex)));
-      }
+      if (lastIndex < text.length) frag.appendChild(document.createTextNode(text.slice(lastIndex)));
       textNode.parentNode.replaceChild(frag, textNode);
     });
-
     el.innerHTML = temp.innerHTML;
   }
 
@@ -187,8 +351,7 @@
     const q = raw.toLowerCase();
     let visible = 0;
 
-    cards.forEach(function (card) {
-      if (card.dataset.dismissed === '1') return;
+    allCards.forEach(function (card) {
       const haystack = card.getAttribute('data-search') || '';
       const match = !q || haystack.indexOf(q) !== -1;
       card.style.display = match ? '' : 'none';
@@ -199,297 +362,175 @@
       highlight(item.el, item.html, raw);
     });
 
-    const activeCards = cards.filter(function (c) { return c.dataset.dismissed !== '1'; });
-    counter.textContent = q ? visible + ' of ' + activeCards.length + ' results' : '';
+    counter.textContent = q ? visible + ' of ' + allCards.length + ' results' : '';
     clear.hidden = !raw;
     noResults.hidden = visible !== 0;
+
+    updateCoverflow();
+    setTimeout(function () { scrollToIndex(0); }, 60);
   }
 
   document.addEventListener('keydown', function (e) {
     if (e.key === '/' && document.activeElement !== input) {
-      e.preventDefault();
-      input.focus();
+      e.preventDefault(); input.focus();
     }
     if (e.key === 'Escape' && document.activeElement === input) {
-      input.value = '';
-      filter();
-      input.blur();
+      input.value = ''; filter(); input.blur();
     }
   });
 
   input.addEventListener('input', filter);
-
   clear.addEventListener('click', function () {
-    input.value = '';
-    filter();
-    input.focus();
+    input.value = ''; filter(); input.focus();
   });
 
   const backToTop = document.getElementById('back-to-top');
   if (backToTop) {
     backToTop.addEventListener('click', function (e) {
       e.preventDefault();
-      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      window.scrollTo({ top: 0, behavior: prefersReduced ? 'auto' : 'smooth' });
+      const pr = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.scrollTo({ top: 0, behavior: pr ? 'auto' : 'smooth' });
     });
   }
 
   /* ============================================================
-     2. DRAG-TO-DISMISS
+     2. CARROSSEL 3D — COVERFLOW
      ============================================================ */
-  const DISMISS_RATIO = 0.35;
-  const MAX_OFFSET    = 220;
-  // Chave única por país — evita que lidos de um país sumam de outro
-  const STORAGE_KEY   = 'sinews:read:{{ country.code }}';
+  let navDebounce = null;
 
-  const readSet = (function () {
-    if (!STORAGE_KEY) return new Set();
-    try { return new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')); }
-    catch (e) { return new Set(); }
-  })();
-
-  function persist() {
-    if (!STORAGE_KEY) return;
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(readSet))); }
-    catch (e) {}
+  function visibleCards() {
+    return allCards.filter(function (c) { return c.style.display !== 'none'; });
   }
 
-  function cardKey(card) {
-    // Nesta página, o card tem data-key com a URL do artigo original
-    return card.getAttribute('data-key');
-  }
+  function updateCoverflow() {
+    const center = carousel.scrollLeft + carousel.clientWidth / 2;
+    const cardWidth = carousel.clientWidth;
+    let closestIdx = 0;
+    let closestDist = Infinity;
 
-  // Remove já os que estavam lidos
-  cards.forEach(function (card) {
-    const k = cardKey(card);
-    if (k && readSet.has(k)) {
-      card.dataset.dismissed = '1';
-      card.remove();
+    visibleCards().forEach(function (card, idx) {
+      const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+      const delta = cardCenter - center;
+      const dist = Math.abs(delta);
+      if (dist < closestDist) { closestDist = dist; closestIdx = idx; }
+
+      const ratio = Math.max(-1, Math.min(1, delta / (cardWidth * 0.55)));
+
+      const rotateY = -ratio * 32;
+      const translateZ = -Math.abs(ratio) * 160;
+      const translateX = -ratio * 18;
+      const scale = 1 - Math.abs(ratio) * 0.14;
+      const opacity = 1 - Math.abs(ratio) * 0.55;
+      const blur = Math.abs(ratio) * 2.2;
+
+      card.style.transform =
+        'translateX(' + translateX + 'px) ' +
+        'translateZ(' + translateZ + 'px) ' +
+        'rotateY(' + rotateY + 'deg) ' +
+        'scale(' + scale + ')';
+      card.style.opacity = opacity.toFixed(3);
+      card.style.filter = blur > 0.15 ? 'blur(' + blur.toFixed(2) + 'px)' : 'none';
+      card.style.zIndex = String(100 - idx);
+      card.classList.toggle('is-active', idx === closestIdx);
+    });
+
+    const total = visibleCards().length;
+    if (total > 1) {
+      indicator.hidden = false;
+      currentEl.textContent = String(closestIdx + 1);
+      totalEl.textContent = String(total);
+      renderDots(total, closestIdx);
+    } else {
+      indicator.hidden = true;
     }
+
+    prevBtn.disabled = carousel.scrollLeft <= 2;
+    nextBtn.disabled = carousel.scrollLeft + carousel.clientWidth >= carousel.scrollWidth - 2;
+  }
+
+  function renderDots(total, active) {
+    const max = 7;
+    let start = 0, end = total;
+    if (total > max) {
+      start = Math.max(0, Math.min(active - Math.floor(max / 2), total - max));
+      end = start + max;
+    }
+    const frag = document.createDocumentFragment();
+    for (let i = start; i < end; i++) {
+      const s = document.createElement('span');
+      if (i === active) s.className = 'active';
+      frag.appendChild(s);
+    }
+    dotsEl.replaceChildren(frag);
+  }
+
+  function scrollToIndex(idx, smooth) {
+    const list = visibleCards();
+    if (!list.length) return;
+    const card = list[Math.max(0, Math.min(idx, list.length - 1))];
+    const target = card.offsetLeft + card.offsetWidth / 2 - carousel.clientWidth / 2;
+    carousel.scrollTo({
+      left: target,
+      behavior: smooth === false ? 'auto' : 'smooth'
+    });
+  }
+
+  function currentIndex() {
+    const center = carousel.scrollLeft + carousel.clientWidth / 2;
+    let best = 0, bestDist = Infinity;
+    visibleCards().forEach(function (card, i) {
+      const d = Math.abs(card.offsetLeft + card.offsetWidth / 2 - center);
+      if (d < bestDist) { bestDist = d; best = i; }
+    });
+    return best;
+  }
+
+  carousel.addEventListener('scroll', function () {
+    if (navDebounce) cancelAnimationFrame(navDebounce);
+    navDebounce = requestAnimationFrame(updateCoverflow);
+  }, { passive: true });
+
+  window.addEventListener('resize', function () {
+    updateCoverflow();
+    scrollToIndex(currentIndex(), false);
   });
 
-  /* -------- Botão "Reset read" -------- */
-  const resetBtn = document.getElementById('reset-read');
+  prevBtn.addEventListener('click', function () { scrollToIndex(currentIndex() - 1); });
+  nextBtn.addEventListener('click', function () { scrollToIndex(currentIndex() + 1); });
 
-  function updateResetButton() {
-    if (!resetBtn) return;
-    const temLidos = readSet.size > 0;
-    const temDispensados = cards.some(function (c) { return c.dataset.dismissed === '1'; });
-    resetBtn.hidden = !(temLidos || temDispensados);
-  }
-
-  updateResetButton();
-
-  if (resetBtn) {
-    resetBtn.addEventListener('click', function (e) {
-      e.preventDefault();
-      if (STORAGE_KEY) {
-        try { localStorage.removeItem(STORAGE_KEY); } catch (err) {}
-      }
-      readSet.clear();
-      location.reload();
-    });
-  }
-
-  /* -------- Toast (versão com toast único) -------- */
-  const stack = document.getElementById('toast-stack');
-  let activeToast = null;
-  let activeTimer = null;
-  let activeUndo = null;
-
-  function showToast(message, onUndo) {
-    if (activeToast) {
-      clearTimeout(activeTimer);
-
-      activeUndo = onUndo;
-      const undoBtn = activeToast.querySelector('.toast-undo');
-      if (undoBtn && onUndo) {
-        const novo = undoBtn.cloneNode(true);
-        undoBtn.parentNode.replaceChild(novo, undoBtn);
-        novo.addEventListener('click', function () {
-          if (activeUndo) activeUndo();
-          removeToast();
-        });
-      }
-
-      activeTimer = setTimeout(removeToast, 3200);
-      return;
-    }
-
-    const t = document.createElement('div');
-    t.className = 'toast';
-    t.innerHTML =
-      '<span class="toast-check">' +
-        '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>' +
-      '</span>' +
-      '<span>' + message + '</span>' +
-      (onUndo ? '<button class="toast-undo" type="button">Undo</button>' : '');
-    stack.appendChild(t);
-    requestAnimationFrame(function () { t.classList.add('show'); });
-
-    activeToast = t;
-    activeUndo = onUndo || null;
-    activeTimer = setTimeout(removeToast, 3200);
-
-    if (onUndo) {
-      t.querySelector('.toast-undo').addEventListener('click', function () {
-        if (activeUndo) activeUndo();
-        removeToast();
-      });
-    }
-
-    t.addEventListener('pointerdown', function (e) {
-      const startX = e.clientX;
-      function move(ev) {
-        const dx = ev.clientX - startX;
-        t.style.transform = 'translateX(' + dx + 'px)';
-        t.style.opacity = String(1 - Math.min(Math.abs(dx) / 150, 1));
-      }
-      function up(ev) {
-        document.removeEventListener('pointermove', move);
-        document.removeEventListener('pointerup', up);
-        if (Math.abs(ev.clientX - startX) > 80) {
-          removeToast();
-        } else {
-          t.style.transform = '';
-          t.style.opacity = '';
-        }
-      }
-      document.addEventListener('pointermove', move);
-      document.addEventListener('pointerup', up);
-    });
-  }
-
-  function removeToast() {
-    if (!activeToast) return;
-    clearTimeout(activeTimer);
-    const t = activeToast;
-    activeToast = null;
-    activeUndo = null;
-    t.classList.remove('show');
-    setTimeout(function () { t.remove(); }, 350);
-  }
-
-  /* -------- Drag -------- */
-  function attachDrag(card) {
-    let startX = 0, startY = 0;
-    let dx = 0;
-    let dragging = false;
-    let decided = false;
-    let pointerId = null;
-
-    function onDown(e) {
-      if (e.button !== undefined && e.button !== 0) return;
-      startX = e.clientX;
-      startY = e.clientY;
-      dx = 0;
-      dragging = true;
-      decided = false;
-      pointerId = e.pointerId;
-    }
-
-    function onMove(e) {
-      if (!dragging || e.pointerId !== pointerId) return;
-      const mx = e.clientX - startX;
-      const my = e.clientY - startY;
-
-      if (!decided) {
-        if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
-        decided = true;
-
-        if (Math.abs(my) > Math.abs(mx)) {
-          dragging = false;
-          return;
-        }
-
-        card.classList.add('dragging');
-        if (card.setPointerCapture) {
-          try { card.setPointerCapture(e.pointerId); } catch (err) {}
-        }
-        card.dataset.wasDragging = '1';
-      }
-
-      dx = mx;
-      const clamped = Math.sign(dx) * Math.min(Math.abs(dx), MAX_OFFSET);
-      card.style.transform = 'translateX(' + clamped + 'px)';
-
-      const ratio = Math.abs(clamped) / card.offsetWidth;
-      card.classList.toggle('will-dismiss', ratio >= DISMISS_RATIO);
-      e.preventDefault();
-    }
-
-    function onUp() {
-      if (!dragging) {
-        delete card.dataset.wasDragging;
-        return;
-      }
-      dragging = false;
-      card.classList.remove('dragging');
-
-      const ratio = Math.abs(dx) / card.offsetWidth;
-
-      if (ratio >= DISMISS_RATIO) {
-        // Bloqueia clique acidental no "read original →" depois de arrastar
-        const link = card.querySelector('.meta a');
-        if (link) {
-          const block = function (ev) { ev.preventDefault(); ev.stopPropagation(); };
-          link.addEventListener('click', block, { once: true, capture: true });
-          setTimeout(function () {
-            link.removeEventListener('click', block, true);
-          }, 300);
-        }
-        dismissCard(card, dx);
-      } else {
-        card.style.transform = '';
-        card.classList.remove('will-dismiss');
-      }
-      setTimeout(function () { delete card.dataset.wasDragging; }, 100);
-    }
-
-    card.addEventListener('pointerdown', onDown);
-    card.addEventListener('pointermove', onMove);
-    card.addEventListener('pointerup', onUp);
-    card.addEventListener('pointercancel', onUp);
-  }
-
-  function dismissCard(card, dx) {
-    const dir = Math.sign(dx) || 1;
-    card.style.setProperty('--exit-x', (dir * 120) + '%');
-    card.classList.add('dismissed');
-    card.dataset.dismissed = '1';
-
-    const key = cardKey(card);
-    const parent = card.parentNode;
-    const nextSibling = card.nextSibling;
-
-    if (key) { readSet.add(key); persist(); }
-
-    setTimeout(function () {
-      card.remove();
-      if (counter.textContent) filter();
-      updateResetButton();
-    }, 380);
-
-    showToast('Read', function () {
-      if (key) { readSet.delete(key); persist(); }
-      card.classList.remove('dismissed');
-      card.dataset.dismissed = '';
-      card.style.removeProperty('--exit-x');
-      card.style.transform = '';
-      card.classList.remove('will-dismiss');
-      if (nextSibling && nextSibling.parentNode === parent) {
-        parent.insertBefore(card, nextSibling);
-      } else {
-        parent.appendChild(card);
-      }
-      if (counter.textContent) filter();
-      updateResetButton();
-    });
-  }
-
-  cards.forEach(function (card) {
-    if (card.dataset.dismissed !== '1') attachDrag(card);
+  document.addEventListener('keydown', function (e) {
+    if (document.activeElement === input) return;
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); scrollToIndex(currentIndex() - 1); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); scrollToIndex(currentIndex() + 1); }
   });
+
+  /* ============================================================
+     3. CLIQUE NO CARD ATIVO → abre o artigo original
+     ============================================================ */
+  allCards.forEach(function (card) {
+    card.addEventListener('click', function (e) {
+      if (e.target.closest('a')) return;
+      if (!card.classList.contains('is-active')) return;
+      const href = card.getAttribute('data-href');
+      if (href) window.open(href, '_blank', 'noopener');
+    });
+  });
+
+  /* ============================================================
+     4. BOOT
+     ============================================================ */
+  function boot() {
+    updateCoverflow();
+    scrollToIndex(0, false);
+    requestAnimationFrame(function () { updateCoverflow(); });
+  }
+
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(boot);
+  } else {
+    window.addEventListener('load', boot);
+  }
+  window.addEventListener('resize', function () { setTimeout(updateCoverflow, 40); });
 
 })();
 </script>

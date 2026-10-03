@@ -52,7 +52,11 @@ def pais(code):
     )
     if not country:
         abort(404)
-    return render_template("pais.html", country=country, filename=data["filename"])
+    return render_template(
+        "pais.html",
+        country=country,
+        filename=data["filename"],
+        generated_at=data["generated_at"])   # 👈 adiciona isso
 
 
 @app.route("/refresh")
